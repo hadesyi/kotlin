@@ -163,7 +163,7 @@ public class FunctionCodegen {
         JvmMethodGenericSignature jvmSignature = typeMapper.mapSignatureWithGeneric(functionDescriptor, contextKind);
         Method asmMethod = jvmSignature.getAsmMethod();
 
-        int flags = getMethodAsmFlags(functionDescriptor, contextKind);
+        int flags = getMethodAsmFlags(functionDescriptor, contextKind, state);
 
         if (origin.getOriginKind() == JvmDeclarationOriginKind.SAM_DELEGATION) {
             flags |= ACC_SYNTHETIC;
@@ -198,7 +198,7 @@ public class FunctionCodegen {
             parentBodyCodegen.addAdditionalTask(new JvmStaticGenerator(functionDescriptor, origin, state, parentBodyCodegen));
         }
 
-        if (state.getClassBuilderMode() != ClassBuilderMode.FULL || isAbstractMethod(functionDescriptor, contextKind)) {
+        if (state.getClassBuilderMode() != ClassBuilderMode.FULL || isAbstractMethod(functionDescriptor, contextKind, state)) {
             generateLocalVariableTable(
                     mv,
                     jvmSignature,
@@ -600,7 +600,7 @@ public class FunctionCodegen {
                 }
             }
 
-            if (!descriptor.getKind().isReal() && isAbstractMethod(descriptor, OwnerKind.IMPLEMENTATION)) {
+            if (!descriptor.getKind().isReal() && isAbstractMethod(descriptor, OwnerKind.IMPLEMENTATION, state)) {
                 CallableDescriptor overridden = SpecialBuiltinMembers.getOverriddenBuiltinReflectingJvmDescriptor(descriptor);
                 assert overridden != null;
 
