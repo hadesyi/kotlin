@@ -43,6 +43,7 @@ import org.jetbrains.kotlin.resolve.BindingContext
 import org.jetbrains.kotlin.resolve.BindingTrace
 import org.jetbrains.kotlin.resolve.DelegatingBindingTrace
 import org.jetbrains.kotlin.resolve.diagnostics.Diagnostics
+import org.jetbrains.org.objectweb.asm.Opcodes
 import java.io.File
 
 class GenerationState @JvmOverloads constructor(
@@ -147,6 +148,8 @@ class GenerationState @JvmOverloads constructor(
 
 
     val rootContext: CodegenContext<*> = RootContext(this)
+
+    val classFileVersion: Int = Opcodes.V1_6
 
     init {
         this.interceptedBuilderFactory = builderFactory

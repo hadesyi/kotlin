@@ -249,7 +249,8 @@ public class InlineCodegen extends CallGenerator {
                     bytes,
                     asmMethod.getName(),
                     asmMethod.getDescriptor(),
-                    classId
+                    classId,
+                    state
             );
 
             if (nodeAndSMAP == null) {
@@ -282,9 +283,7 @@ public class InlineCodegen extends CallGenerator {
             }
         });
 
-        nodeAndSMAP = InlineCodegenUtil.getMethodNode(
-                bytes, asmMethod.getName(), asmMethod.getDescriptor(), containerId
-        );
+        nodeAndSMAP = InlineCodegenUtil.getMethodNode(bytes, asmMethod.getName(), asmMethod.getDescriptor(), containerId, state);
 
         if (nodeAndSMAP == null) {
             throw new IllegalStateException("Couldn't obtain compiled function body for " + descriptorName(functionDescriptor));
