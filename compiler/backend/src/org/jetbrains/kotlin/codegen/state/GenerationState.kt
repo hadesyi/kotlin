@@ -149,7 +149,11 @@ class GenerationState @JvmOverloads constructor(
 
     val rootContext: CodegenContext<*> = RootContext(this)
 
-    val classFileVersion: Int = Opcodes.V1_6
+    val isJava8: Boolean by lazy {
+        java.lang.Boolean.parseBoolean(System.getProperty("kotlin.java8"))
+    }
+
+    val classFileVersion: Int = if (isJava8) Opcodes.V1_8 else Opcodes.V1_6
 
     init {
         this.interceptedBuilderFactory = builderFactory
