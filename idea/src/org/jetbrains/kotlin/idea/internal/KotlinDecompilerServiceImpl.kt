@@ -28,7 +28,7 @@ import java.util.jar.Manifest
 
 class KotlinDecompilerServiceImpl : KotlinDecompilerService {
     override fun decompile(file: KtFile): String {
-        val generationState = KotlinBytecodeToolWindow.compileSingleFile(file, true, true, true)
+        val generationState = KotlinBytecodeToolWindow.compileSingleFile(file, true, true, true, false)
 
         val bytecodeMap = hashMapOf<File, ByteArray>()
         generationState.factory.asList().filter { FileUtilRt.extensionEquals(it.relativePath, "class") }.forEach {

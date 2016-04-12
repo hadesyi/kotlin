@@ -38,6 +38,9 @@ public class JVMConfigurationKeys {
     public static final CompilerConfigurationKey<Boolean> INHERIT_MULTIFILE_PARTS =
             CompilerConfigurationKey.create("compile multifile classes to a hierarchy of parts and facade");
 
+    public static final CompilerConfigurationKey<Boolean> JVM_8_TARGET =
+            CompilerConfigurationKey.create("compile to jvm 8");
+
     public static final CompilerConfigurationKey<IncrementalCompilationComponents> INCREMENTAL_COMPILATION_COMPONENTS =
             CompilerConfigurationKey.create("incremental cache provider");
 

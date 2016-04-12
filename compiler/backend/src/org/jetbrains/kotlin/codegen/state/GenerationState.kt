@@ -59,6 +59,7 @@ class GenerationState @JvmOverloads constructor(
         disableOptimization: Boolean = false,
         val useTypeTableInSerializer: Boolean = false,
         val inheritMultifileParts: Boolean = false,
+        jvm8: Boolean = false,
         val packagesWithObsoleteParts: Collection<FqName> = emptySet(),
         val obsoleteMultifileClasses: Collection<FqName> = emptySet(),
         // for PackageCodegen in incremental compilation mode
@@ -150,7 +151,7 @@ class GenerationState @JvmOverloads constructor(
     val rootContext: CodegenContext<*> = RootContext(this)
 
     val isJava8: Boolean by lazy {
-        java.lang.Boolean.parseBoolean(System.getProperty("kotlin.java8"))
+        jvm8 || java.lang.Boolean.parseBoolean(System.getProperty("kotlin.java8"))
     }
 
     val classFileVersion: Int = if (isJava8) Opcodes.V1_8 else Opcodes.V1_6

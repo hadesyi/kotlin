@@ -104,6 +104,7 @@ public class GenerationUtils {
                 getConfigurationValueOrDefault(configuration, JVMConfigurationKeys.DISABLE_OPTIMIZATION, false),
                 useTypeTableInSerializer,
                 getConfigurationValueOrDefault(configuration, JVMConfigurationKeys.INHERIT_MULTIFILE_PARTS, false),
+                getConfigurationValueOrDefault(configuration, JVMConfigurationKeys.JVM_8_TARGET, false),
                 Collections.<FqName>emptySet(),
                 Collections.<FqName>emptySet(),
                 null,

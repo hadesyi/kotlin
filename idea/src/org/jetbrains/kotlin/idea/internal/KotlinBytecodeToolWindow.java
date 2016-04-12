@@ -112,7 +112,12 @@ public class KotlinBytecodeToolWindow extends JPanel implements Disposable {
             KtFile jetFile = location.getKFile();
             assert jetFile != null;
 
-            return getBytecodeForFile(jetFile, enableInline.isSelected(), enableAssertions.isSelected(), enableOptimization.isSelected());
+            return getBytecodeForFile(
+                    jetFile,
+                    enableInline.isSelected(),
+                    enableAssertions.isSelected(),
+                    enableOptimization.isSelected(),
+                    jvm8Target.isSelected());
         }
 
         @Override
@@ -160,8 +165,9 @@ public class KotlinBytecodeToolWindow extends JPanel implements Disposable {
     private final JCheckBox enableOptimization;
     private final JCheckBox enableAssertions;
     private final JButton decompile;
+    private final JCheckBox jvm8Target;
 
-    public KotlinBytecodeToolWindow(final Project project, ToolWindow toolWindow) {
+    public KotlinBytecodeToolWindow(Project project, ToolWindow toolWindow) {
         super(new BorderLayout());
         myProject = project;
         this.toolWindow = toolWindow;
@@ -198,9 +204,11 @@ public class KotlinBytecodeToolWindow extends JPanel implements Disposable {
         enableInline = new JCheckBox("Inline", true);
         enableOptimization = new JCheckBox("Optimization", true);
         enableAssertions = new JCheckBox("Assertions", true);
+        jvm8Target = new JCheckBox("JVM 8 target", false);
         optionPanel.add(enableInline);
         optionPanel.add(enableOptimization);
         optionPanel.add(enableAssertions);
+        optionPanel.add(jvm8Target);
 
         new InfinitePeriodicalTask(UPDATE_DELAY, Alarm.ThreadToUse.SWING_THREAD, this, new Computable<LongRunningReadTask>() {
             @Override
@@ -215,14 +223,15 @@ public class KotlinBytecodeToolWindow extends JPanel implements Disposable {
     // public for tests
     @NotNull
     public static String getBytecodeForFile(
-            final KtFile jetFile,
+            KtFile jetFile,
             boolean enableInline,
             boolean enableAssertions,
-            boolean enableOptimization
+            boolean enableOptimization,
+            boolean jvm8Target
     ) {
         GenerationState state;
         try {
-            state = compileSingleFile(jetFile, enableInline, enableAssertions, enableOptimization);
+            state = compileSingleFile(jetFile, enableInline, enableAssertions, enableOptimization, jvm8Target);
         }
         catch (ProcessCanceledException e) {
             throw e;
@@ -264,7 +273,8 @@ public class KotlinBytecodeToolWindow extends JPanel implements Disposable {
             final KtFile ktFile,
             boolean enableInline,
             boolean enableAssertions,
-            boolean enableOptimization
+            boolean enableOptimization,
+            boolean jvm8Target
     ) {
         ResolutionFacade resolutionFacade = ResolutionUtils.getResolutionFacade(ktFile);
 
@@ -308,7 +318,9 @@ public class KotlinBytecodeToolWindow extends JPanel implements Disposable {
                                     generateClassFilter,
                                     !enableInline,
                                     !enableOptimization,
-                                    /*useTypeTableInSerializer=*/false);
+                                    /*useTypeTableInSerializer=*/false,
+                                    /*inheritMultifileParts*/false,
+                                    jvm8Target);
         KotlinCodegenFacade.compileCorrectFiles(state, CompilationErrorHandler.THROW_EXCEPTION);
         return state;
     }
