@@ -18,6 +18,7 @@ package org.jetbrains.kotlin.psi;
 
 import com.intellij.lang.ASTNode;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.kotlin.lexer.KtTokens;
 import org.jetbrains.kotlin.psi.stubs.KotlinPlaceHolderStub;
 import org.jetbrains.kotlin.psi.stubs.elements.KtStubElementTypes;
 
@@ -35,6 +36,11 @@ public class KtTypeArgumentList extends KtElementImplStub<KotlinPlaceHolderStub<
     @Override
     public <R, D> R accept(@NotNull KtVisitor<R, D> visitor, D data) {
         return visitor.visitTypeArgumentList(this, data);
+    }
+
+    @NotNull
+    public KtTypeProjection addArgument(@NotNull KtTypeProjection typeArgument) {
+        return EditCommaSeparatedListHelper.INSTANCE.addItem(this, getArguments(), typeArgument, KtTokens.LT);
     }
 
     @NotNull

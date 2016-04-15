@@ -27,6 +27,7 @@ import org.jetbrains.kotlin.psi.KtPsiFactory
 import org.jetbrains.kotlin.psi.KtTypeArgumentList
 import org.jetbrains.kotlin.resolve.BindingContext
 import org.jetbrains.kotlin.resolve.calls.callUtil.getResolvedCall
+import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
 import org.jetbrains.kotlin.types.ErrorUtils
 
 class InsertExplicitTypeArgumentsIntention : SelfTargetingRangeIntention<KtCallExpression>(KtCallExpression::class.java, "Add explicit type arguments"), LowPriorityAction {
@@ -34,23 +35,25 @@ class InsertExplicitTypeArgumentsIntention : SelfTargetingRangeIntention<KtCallE
         return if (isApplicableTo(element, element.analyze())) element.calleeExpression!!.textRange else null
     }
 
-    override fun applyTo(element: KtCallExpression, editor: Editor?) {
-        val argumentList = createTypeArguments(element, element.analyze())!!
-
-        val callee = element.calleeExpression!!
-        val newArgumentList = element.addAfter(argumentList, callee) as KtTypeArgumentList
-
-        ShortenReferences.DEFAULT.process(newArgumentList)
-    }
+    override fun applyTo(element: KtCallExpression, editor: Editor?) = applyTo(element)
 
     companion object {
-        fun isApplicableTo(element: KtCallExpression, bindingContext: BindingContext): Boolean {
+        fun isApplicableTo(element: KtCallExpression, bindingContext: BindingContext = element.analyze(BodyResolveMode.PARTIAL)): Boolean {
             if (!element.typeArguments.isEmpty()) return false
             if (element.calleeExpression == null) return false
 
             val resolvedCall = element.getResolvedCall(bindingContext) ?: return false
             val typeArgs = resolvedCall.typeArguments
             return typeArgs.isNotEmpty() && typeArgs.values.none { ErrorUtils.containsErrorType(it) }
+        }
+
+        fun applyTo(element: KtCallExpression) {
+            val argumentList = createTypeArguments(element, element.analyze())!!
+
+            val callee = element.calleeExpression!!
+            val newArgumentList = element.addAfter(argumentList, callee) as KtTypeArgumentList
+
+            ShortenReferences.DEFAULT.process(newArgumentList)
         }
 
         fun createTypeArguments(element: KtCallExpression, bindingContext: BindingContext): KtTypeArgumentList? {

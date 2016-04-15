@@ -28,6 +28,7 @@ import org.jetbrains.kotlin.idea.quickfix.createFromUsage.createClass.CreateClas
 import org.jetbrains.kotlin.idea.quickfix.createFromUsage.createClass.CreateClassFromConstructorCallActionFactory
 import org.jetbrains.kotlin.idea.quickfix.createFromUsage.createClass.CreateClassFromReferenceExpressionActionFactory
 import org.jetbrains.kotlin.idea.quickfix.createFromUsage.createClass.CreateClassFromTypeReferenceActionFactory
+import org.jetbrains.kotlin.idea.quickfix.createFromUsage.createTypeParameter.CreateTypeParameterByRefActionFactory
 import org.jetbrains.kotlin.idea.quickfix.createFromUsage.createVariable.CreateLocalVariableActionFactory
 import org.jetbrains.kotlin.idea.quickfix.createFromUsage.createVariable.CreateParameterByNamedArgumentActionFactory
 import org.jetbrains.kotlin.idea.quickfix.createFromUsage.createVariable.CreateParameterByRefActionFactory
@@ -380,5 +381,7 @@ class QuickFixRegistrar : QuickFixContributor {
         UNRESOLVED_REFERENCE.registerFactory(MakeConstructorParameterPropertyFix)
 
         SUPERTYPE_IS_EXTENSION_FUNCTION_TYPE.registerFactory(ConvertExtensionToFunctionTypeFix)
+
+        UNRESOLVED_REFERENCE.registerFactory(CreateTypeParameterByRefActionFactory)
     }
 }
