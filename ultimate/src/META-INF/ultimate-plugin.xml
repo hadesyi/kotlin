@@ -6,4 +6,5 @@
     <depends optional="true">com.intellij.css</depends>
     <depends optional="true">com.intellij.jsp</depends>
     <depends optional="true">com.intellij.diagram</depends>
+    <depends optional="true" config-file="ultimate-injection.xml">org.intellij.intelliLang</depends>
 </idea-plugin>

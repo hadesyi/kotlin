@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<component name="LanguageInjectionConfiguration">
+    <injection language="SpEL" injector-id="kotlin">
+        <display-name>Spring @Cacheable and @CacheEvict (Kotlin)</display-name>
+        <place><![CDATA[psiMethod().withName("condition").withParameters().definedInClass("org.springframework.cache.annotation.Cacheable")]]></place>
+    </injection>
+</component>
