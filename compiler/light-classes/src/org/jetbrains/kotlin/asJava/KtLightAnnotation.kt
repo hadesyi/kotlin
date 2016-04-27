@@ -35,7 +35,7 @@ class KtLightAnnotation(
         override val kotlinOrigin: KtAnnotationEntry,
         private val owner: PsiAnnotationOwner
 ) : PsiAnnotation by clsDelegate, KtLightElement<KtAnnotationEntry, PsiAnnotation> {
-    inner class LightExpressionValue(private val delegate: PsiExpression) : PsiAnnotationMemberValue, PsiExpression by delegate {
+    inner class LightExpressionValue(val delegate: PsiExpression) : PsiAnnotationMemberValue, PsiExpression by delegate {
         val originalExpression: PsiElement? by lazy {
             val nameAndValue = getStrictParentOfType<PsiNameValuePair>() ?: return@lazy null
             val annotationEntry = this@KtLightAnnotation.kotlinOrigin
