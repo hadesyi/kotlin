@@ -28,6 +28,9 @@ public class CommonConfigurationKeys {
     public static final CompilerConfigurationKey<List<ContentRoot>> CONTENT_ROOTS =
             CompilerConfigurationKey.create("content roots");
 
+    public static final CompilerConfigurationKey<LanguageFeatureSettings> LANGUAGE_FEATURE_SETTINGS =
+            CompilerConfigurationKey.create("language feature settings");
+
     public static final CompilerConfigurationKey<List<KotlinScriptDefinition>> SCRIPT_DEFINITIONS_KEY =
             CompilerConfigurationKey.create("script definitions");
 

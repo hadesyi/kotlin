@@ -16,6 +16,7 @@
 
 package org.jetbrains.kotlin.frontend.di
 
+import org.jetbrains.kotlin.config.LanguageFeatureSettings
 import org.jetbrains.kotlin.container.*
 import org.jetbrains.kotlin.context.LazyResolveToken
 import org.jetbrains.kotlin.context.ModuleContext
@@ -94,6 +95,7 @@ fun createContainerForLazyLocalClassifierAnalyzer(
         bindingTrace: BindingTrace,
         platform: TargetPlatform,
         lookupTracker: LookupTracker,
+        languageFeatureSettings: LanguageFeatureSettings,
         localClassDescriptorHolder: LocalClassDescriptorHolder
 ): StorageComponentContainer = createContainer("LocalClassifierAnalyzer") {
     configureModule(moduleContext, platform, bindingTrace)
@@ -111,6 +113,8 @@ fun createContainerForLazyLocalClassifierAnalyzer(
 
     useImpl<DeclarationScopeProviderForLocalClassifierAnalyzer>()
     useImpl<LocalLazyDeclarationResolver>()
+
+    useInstance(languageFeatureSettings)
 }
 
 fun createContainerForLazyResolve(
