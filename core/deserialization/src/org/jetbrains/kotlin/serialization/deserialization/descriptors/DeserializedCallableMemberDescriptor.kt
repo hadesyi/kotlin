@@ -132,4 +132,6 @@ class DeserializedConstructorDescriptor(
     override fun isInline(): Boolean = false
 
     override fun isTailrec(): Boolean = false
+
+    override fun isSuspend(): Boolean  = false
 }

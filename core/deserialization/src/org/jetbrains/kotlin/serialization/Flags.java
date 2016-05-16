@@ -51,6 +51,7 @@ public class Flags {
     public static final BooleanFlagField IS_INLINE = FlagField.booleanAfter(IS_INFIX);
     public static final BooleanFlagField IS_TAILREC = FlagField.booleanAfter(IS_INLINE);
     public static final BooleanFlagField IS_EXTERNAL_FUNCTION = FlagField.booleanAfter(IS_TAILREC);
+    public static final BooleanFlagField IS_SUSPEND = FlagField.booleanAfter(IS_EXTERNAL_FUNCTION);
 
     // Properties
 
@@ -66,6 +67,7 @@ public class Flags {
     public static final BooleanFlagField DECLARES_DEFAULT_VALUE = FlagField.booleanAfter(HAS_ANNOTATIONS);
     public static final BooleanFlagField IS_CROSSINLINE = FlagField.booleanAfter(DECLARES_DEFAULT_VALUE);
     public static final BooleanFlagField IS_NOINLINE = FlagField.booleanAfter(IS_CROSSINLINE);
+    public static final BooleanFlagField IS_COROUTINE = FlagField.booleanAfter(IS_NOINLINE);
 
     // Accessors
 
