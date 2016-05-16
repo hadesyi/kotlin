@@ -16,6 +16,7 @@
 
 package org.jetbrains.kotlin.load.kotlin.reflect
 
+import com.sun.xml.internal.ws.org.objectweb.asm.Opcodes
 import org.jetbrains.kotlin.load.java.structure.reflect.classId
 import org.jetbrains.kotlin.load.java.structure.reflect.desc
 import org.jetbrains.kotlin.load.java.structure.reflect.isEnumClassOrSpecializedEnumEntryClass
@@ -53,6 +54,10 @@ class ReflectKotlinClass private constructor(
             return ReflectKotlinClass(klass, headerReader.createHeader() ?: return null)
         }
     }
+
+    //TODO support proper value
+    override val classVersion: Int
+        get() = Opcodes.V1_6
 
     override val location: String
         get() = klass.name.replace('.', '/') + ".class"

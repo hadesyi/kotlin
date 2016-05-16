@@ -58,7 +58,7 @@ private fun inlineFunctionsJvmNames(functions: List<ProtoBuf.Function>, nameReso
 private fun readKotlinHeader(bytes: ByteArray): KotlinClassHeader {
     var header: KotlinClassHeader? = null
 
-    FileBasedKotlinClass.create(bytes) { className, classHeader, innerClasses ->
+    FileBasedKotlinClass.create(bytes) { className, classVersion, classHeader, innerClasses ->
         header = classHeader
         null
     }
