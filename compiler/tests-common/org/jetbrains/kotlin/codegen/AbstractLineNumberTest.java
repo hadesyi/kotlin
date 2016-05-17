@@ -100,7 +100,7 @@ public abstract class AbstractLineNumberTest extends TestCaseWithTmpdir {
         KtFile psiFile = fileAndEnv.getFirst();
         KotlinCoreEnvironment environment = fileAndEnv.getSecond();
 
-        GenerationState state = GenerationUtils.compileFileGetGenerationStateForTest(psiFile, environment);
+        GenerationState state = GenerationUtils.compileFileGetGenerationStateForTest(psiFile, environment, null);
 
         if (custom) {
             List<Integer> actualLineNumbers = extractActualLineNumbersFromBytecode(state, false);

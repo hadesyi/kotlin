@@ -44,17 +44,18 @@ public class GenerationUtils {
             @NotNull KtFile psiFile,
             @NotNull KotlinCoreEnvironment environment
     ) {
-        return compileFileGetGenerationStateForTest(psiFile, environment).getFactory();
+        return compileFileGetGenerationStateForTest(psiFile, environment, null).getFactory();
     }
 
     @NotNull
     public static GenerationState compileFileGetGenerationStateForTest(
             @NotNull KtFile psiFile,
-            @NotNull KotlinCoreEnvironment environment
+            @NotNull KotlinCoreEnvironment environment,
+            @Nullable CompilerConfiguration configuration
     ) {
         AnalysisResult analysisResult =
                 JvmResolveUtil.analyzeOneFileWithJavaIntegrationAndCheckForErrors(psiFile, new JvmPackagePartProvider(environment));
-        return compileFilesGetGenerationState(psiFile.getProject(), analysisResult, Collections.singletonList(psiFile), false, null);
+        return compileFilesGetGenerationState(psiFile.getProject(), analysisResult, Collections.singletonList(psiFile), false, configuration);
     }
 
     @NotNull
