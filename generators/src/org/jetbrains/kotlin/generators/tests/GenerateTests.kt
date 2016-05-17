@@ -373,7 +373,7 @@ fun main(args: Array<String>) {
         }
 
         testClass<AbstractCompileKotlinAgainstKotlinTest>() {
-            model("compileKotlinAgainstKotlinJava8")
+            model("codegen/java8/compileKotlinAgainstKotlin")
         }
 
         testClass<AbstractJava8WriteSignatureTest>() {
