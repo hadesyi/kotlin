@@ -28,6 +28,7 @@ import org.jetbrains.kotlin.codegen.context.CodegenContext;
 import org.jetbrains.kotlin.codegen.context.FacadePartWithSourceFile;
 import org.jetbrains.kotlin.codegen.context.MethodContext;
 import org.jetbrains.kotlin.codegen.context.RootContext;
+import org.jetbrains.kotlin.codegen.state.GenerationState;
 import org.jetbrains.kotlin.codegen.state.KotlinTypeMapper;
 import org.jetbrains.kotlin.descriptors.*;
 import org.jetbrains.kotlin.load.java.descriptors.JavaPropertyDescriptor;
@@ -48,7 +49,6 @@ import org.jetbrains.kotlin.types.KotlinType;
 import java.io.File;
 
 import static org.jetbrains.kotlin.codegen.binding.CodegenBinding.LOCAL_VARIABLE_DELEGATE;
-import static org.jetbrains.kotlin.codegen.binding.CodegenBinding.LOCAL_VARIABLE_PROPERTY_METADATA;
 import static org.jetbrains.kotlin.descriptors.Modality.ABSTRACT;
 import static org.jetbrains.kotlin.descriptors.Modality.FINAL;
 import static org.jetbrains.kotlin.resolve.BindingContext.DELEGATED_PROPERTY_CALL;
@@ -57,6 +57,10 @@ import static org.jetbrains.kotlin.resolve.jvm.annotations.AnnotationUtilKt.hasJ
 public class JvmCodegenUtil {
 
     private JvmCodegenUtil() {
+    }
+
+    public static boolean isJvm6Interface(@NotNull DeclarationDescriptor descriptor, @NotNull GenerationState state) {
+        return DescriptorUtils.isInterface(descriptor) && !state.isJvm8();
     }
 
     public static boolean isJvmInterface(DeclarationDescriptor descriptor) {

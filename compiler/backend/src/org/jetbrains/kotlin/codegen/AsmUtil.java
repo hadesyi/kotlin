@@ -170,7 +170,7 @@ public class AsmUtil {
 
     public static boolean isAbstractMethod(FunctionDescriptor functionDescriptor, OwnerKind kind, GenerationState state) {
         return (functionDescriptor.getModality() == Modality.ABSTRACT ||
-                (isJvmInterface(functionDescriptor.getContainingDeclaration()) && !state.isJava8()))
+                (isJvmInterface(functionDescriptor.getContainingDeclaration()) && !state.isJvm8()))
                && !isStaticMethod(kind, functionDescriptor);
     }
 
