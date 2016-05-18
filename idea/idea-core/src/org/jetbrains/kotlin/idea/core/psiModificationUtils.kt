@@ -199,6 +199,12 @@ fun KtModifierListOwner.setVisibility(visibilityModifier: KtModifierKeywordToken
 }
 
 fun KtDeclaration.implicitVisibility(): KtModifierKeywordToken? {
+    if (this is KtConstructor<*>) {
+        val klass = getContainingClassOrObject()
+        if (klass is KtClass) {
+            if (klass.isEnum() || klass.isSealed()) return KtTokens.PRIVATE_KEYWORD
+        }
+    }
     val defaultVisibilityKeyword = if (hasModifier(KtTokens.OVERRIDE_KEYWORD)) {
         (resolveToDescriptor() as? CallableMemberDescriptor)
                 ?.overriddenDescriptors
