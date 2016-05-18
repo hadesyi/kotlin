@@ -30,7 +30,9 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.kotlin.backend.common.output.OutputFile;
 import org.jetbrains.kotlin.checkers.CheckerTestUtil;
 import org.jetbrains.kotlin.cli.common.CLIConfigurationKeys;
+import org.jetbrains.kotlin.cli.common.output.outputUtils.OutputUtilsKt;
 import org.jetbrains.kotlin.cli.jvm.compiler.EnvironmentConfigFiles;
+import org.jetbrains.kotlin.cli.jvm.compiler.JvmPackagePartProvider;
 import org.jetbrains.kotlin.cli.jvm.compiler.KotlinCoreEnvironment;
 import org.jetbrains.kotlin.cli.jvm.config.JVMConfigurationKeys;
 import org.jetbrains.kotlin.cli.jvm.config.JvmContentRootsKt;
@@ -459,6 +461,51 @@ public abstract class CodegenTestCase extends KtUsefulTestCase {
         }
         catch (ClassNotFoundException e) {
             throw ExceptionUtilsKt.rethrow(e);
+        }
+    }
+
+    protected void compile(
+            @NotNull List<TestFile> files,
+            @Nullable File javaSourceDir,
+            @NotNull ConfigurationKind configurationKind,
+            @NotNull TestJdkKind jdkKind,
+            @NotNull List<String> javacOptions
+    ) {
+        CompilerConfiguration configuration = createCompilerConfigurationForTests(
+                configurationKind, jdkKind,
+                Collections.singletonList(getAnnotationsJar()),
+                ArraysKt.filterNotNull(new File[] {javaSourceDir}),
+                files
+        );
+
+        myEnvironment = KotlinCoreEnvironment.createForTests(
+                getTestRootDisposable(), configuration, EnvironmentConfigFiles.JVM_CONFIG_FILES
+        );
+
+        loadMultiFiles(files);
+
+        classFileFactory = GenerationUtils.compileManyFilesGetGenerationStateForTest(
+                myEnvironment.getProject(), myFiles.getPsiFiles(), new JvmPackagePartProvider(myEnvironment),
+                myEnvironment.getConfiguration()
+        ).getFactory();
+
+        if (javaSourceDir != null) {
+            // If there are Java files, they should be compiled against the class files produced by Kotlin, so we dump them to the disk
+            File kotlinOut;
+            try {
+                kotlinOut = KotlinTestUtils.tmpDir(toString());
+            }
+            catch (IOException e) {
+                throw ExceptionUtilsKt.rethrow(e);
+            }
+
+            OutputUtilsKt.writeAllTo(classFileFactory, kotlinOut);
+
+            File output = compileJava(
+                    AbstractBlackBoxCodegenTest.findJavaSourcesInDirectory(javaSourceDir), Collections.singletonList(kotlinOut.getPath()), javacOptions
+            );
+            // Add javac output to classpath so that the created class loader can find generated Java classes
+            JvmContentRootsKt.addJvmClasspathRoot(configuration, output);
         }
     }
 

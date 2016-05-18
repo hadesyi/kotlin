@@ -84,42 +84,7 @@ public abstract class AbstractBlackBoxCodegenTest extends CodegenTestCase {
             @NotNull TestJdkKind jdkKind,
             @NotNull List<String> javacOptions
     ) {
-        CompilerConfiguration configuration = createCompilerConfigurationForTests(
-                configurationKind, jdkKind,
-                Collections.singletonList(getAnnotationsJar()),
-                ArraysKt.filterNotNull(new File[] {javaSourceDir}),
-                files
-        );
-
-        myEnvironment = KotlinCoreEnvironment.createForTests(
-                getTestRootDisposable(), configuration, EnvironmentConfigFiles.JVM_CONFIG_FILES
-        );
-
-        loadMultiFiles(files);
-
-        classFileFactory = GenerationUtils.compileManyFilesGetGenerationStateForTest(
-                myEnvironment.getProject(), myFiles.getPsiFiles(), new JvmPackagePartProvider(myEnvironment),
-                myEnvironment.getConfiguration()
-        ).getFactory();
-
-        if (javaSourceDir != null) {
-            // If there are Java files, they should be compiled against the class files produced by Kotlin, so we dump them to the disk
-            File kotlinOut;
-            try {
-                kotlinOut = KotlinTestUtils.tmpDir(toString());
-            }
-            catch (IOException e) {
-                throw ExceptionUtilsKt.rethrow(e);
-            }
-
-            OutputUtilsKt.writeAllTo(classFileFactory, kotlinOut);
-
-            File output = CodegenTestUtil.compileJava(
-                    findJavaSourcesInDirectory(javaSourceDir), Collections.singletonList(kotlinOut.getPath()), javacOptions
-            );
-            // Add javac output to classpath so that the created class loader can find generated Java classes
-            JvmContentRootsKt.addJvmClasspathRoot(configuration, output);
-        }
+        compile(files, javaSourceDir, configurationKind, jdkKind, javacOptions);
 
         blackBox();
     }
