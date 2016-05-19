@@ -16,10 +16,22 @@
 
 package org.jetbrains.kotlin.coroutines
 
+import org.jetbrains.kotlin.builtins.KotlinBuiltIns
+import org.jetbrains.kotlin.descriptors.CallableDescriptor
+import org.jetbrains.kotlin.descriptors.FunctionDescriptor
 import org.jetbrains.kotlin.descriptors.SimpleFunctionDescriptor
 import org.jetbrains.kotlin.descriptors.impl.AnonymousFunctionDescriptor
+import org.jetbrains.kotlin.name.Name
+import org.jetbrains.kotlin.psi.KtExpression
+import org.jetbrains.kotlin.resolve.BindingContext
+import org.jetbrains.kotlin.resolve.TemporaryBindingTrace
+import org.jetbrains.kotlin.resolve.calls.context.ResolutionContext
+import org.jetbrains.kotlin.resolve.descriptorUtil.builtIns
 import org.jetbrains.kotlin.types.KotlinType
 import org.jetbrains.kotlin.types.TypeCapability
+import org.jetbrains.kotlin.types.expressions.ExpressionTypingUtils
+import org.jetbrains.kotlin.types.expressions.FakeCallKind
+import org.jetbrains.kotlin.types.expressions.FakeCallResolver
 import org.jetbrains.kotlin.util.OperatorNameConventions
 
 /**
@@ -39,3 +51,38 @@ val CallableDescriptor.controllerTypeIfCoroutine: KotlinType?
 
         return this.extensionReceiverParameter?.returnType
     }
+
+fun FakeCallResolver.resolveCoroutineHandleResultCallIfNeeded(
+        callElement: KtExpression,
+        expressionToReturn: KtExpression?,
+        functionDescriptor: FunctionDescriptor,
+        context: ResolutionContext<*>
+) {
+    functionDescriptor.controllerTypeIfCoroutine ?: return
+
+    val info = if (expressionToReturn != null)
+        context.trace.bindingContext.get(BindingContext.EXPRESSION_TYPE_INFO, expressionToReturn)
+    else
+        null
+
+    val temporaryBindingTrace = TemporaryBindingTrace.create(context.trace, "trace to store fake argument for", "continuation")
+
+    val continuation =
+            ExpressionTypingUtils.createFakeExpressionOfType(
+                    callElement.project, temporaryBindingTrace, "continuation", functionDescriptor.builtIns.nothingType)
+
+    val firstArgument =
+            if (expressionToReturn == null || info != null && info.type != null && KotlinBuiltIns.isUnit(info.type))
+                ExpressionTypingUtils.createFakeExpressionOfType(
+                        callElement.project, temporaryBindingTrace, "unit", functionDescriptor.builtIns.unitType)
+            else expressionToReturn
+
+    val resolutionResults = resolveFakeCall(
+            context.replaceBindingTrace(temporaryBindingTrace), functionDescriptor.extensionReceiverParameter!!.value,
+            Name.identifier("handleResult"), callElement, callElement, FakeCallKind.OTHER,
+            listOf(firstArgument, continuation))
+
+    if (resolutionResults.isSuccess) {
+        context.trace.record(BindingContext.RETURN_HANDLE_RESULT_RESOLVED_CALL, callElement, resolutionResults.resultingCall)
+    }
+}
