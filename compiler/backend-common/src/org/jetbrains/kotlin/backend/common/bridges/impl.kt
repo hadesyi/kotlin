@@ -17,6 +17,7 @@
 package org.jetbrains.kotlin.backend.common.bridges
 
 import org.jetbrains.kotlin.descriptors.CallableMemberDescriptor
+import org.jetbrains.kotlin.descriptors.DeclarationDescriptor
 import org.jetbrains.kotlin.descriptors.FunctionDescriptor
 import org.jetbrains.kotlin.descriptors.Modality
 import org.jetbrains.kotlin.resolve.DescriptorUtils
@@ -25,9 +26,10 @@ import org.jetbrains.kotlin.resolve.calls.callResolverUtil.isOrOverridesSynthesi
 
 fun <Signature> generateBridgesForFunctionDescriptor(
         descriptor: FunctionDescriptor,
-        signature: (FunctionDescriptor) -> Signature
+        signature: (FunctionDescriptor) -> Signature,
+        abstractnessChecker: (DeclarationDescriptor) -> Boolean
 ): Set<Bridge<Signature>> {
-    return generateBridges(DescriptorBasedFunctionHandle(descriptor), { signature(it.descriptor) })
+    return generateBridges(DescriptorBasedFunctionHandle(descriptor, abstractnessChecker), { signature(it.descriptor) })
 }
 
 /**
@@ -47,8 +49,8 @@ fun <Signature> generateBridgesForFunctionDescriptor(
  * can generate a bridge near an implementation (of course, in case it has a super-declaration with a different signature). Ultimately this
  * eases the process of determining what bridges are already generated in our supertypes and need to be inherited, not regenerated.
  */
-data class DescriptorBasedFunctionHandle(val descriptor: FunctionDescriptor) : FunctionHandle {
-    private val overridden = descriptor.overriddenDescriptors.map { DescriptorBasedFunctionHandle(it.original) }
+class DescriptorBasedFunctionHandle(val descriptor: FunctionDescriptor, abstractnessChecker: (DeclarationDescriptor) -> Boolean) : FunctionHandle {
+    private val overridden = descriptor.overriddenDescriptors.map { DescriptorBasedFunctionHandle(it.original, abstractnessChecker) }
 
     override val isDeclaration: Boolean =
             descriptor.kind.isReal ||
@@ -56,9 +58,17 @@ data class DescriptorBasedFunctionHandle(val descriptor: FunctionDescriptor) : F
 
     override val isAbstract: Boolean =
             descriptor.modality == Modality.ABSTRACT ||
-            DescriptorUtils.isInterface(descriptor.containingDeclaration)
+            abstractnessChecker(descriptor.containingDeclaration)
 
     override fun getOverridden() = overridden
+
+    override fun hashCode(): Int {
+        return descriptor.hashCode()
+    }
+
+    override fun equals(other: Any?): Boolean {
+        return other is DescriptorBasedFunctionHandle && descriptor == other.descriptor
+    }
 }
 
 

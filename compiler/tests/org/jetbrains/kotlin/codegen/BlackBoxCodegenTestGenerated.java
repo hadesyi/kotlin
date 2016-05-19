@@ -1162,6 +1162,12 @@ public class BlackBoxCodegenTestGenerated extends AbstractBlackBoxCodegenTest {
             doTest(fileName);
         }
 
+        @TestMetadata("twoParentsWithDifferentMethodsTwoBridges2.kt")
+        public void testTwoParentsWithDifferentMethodsTwoBridges2() throws Exception {
+            String fileName = KotlinTestUtils.navigationMetadata("compiler/testData/codegen/box/bridges/twoParentsWithDifferentMethodsTwoBridges2.kt");
+            doTest(fileName);
+        }
+
         @TestMetadata("twoParentsWithTheSameMethodOneBridge.kt")
         public void testTwoParentsWithTheSameMethodOneBridge() throws Exception {
             String fileName = KotlinTestUtils.navigationMetadata("compiler/testData/codegen/box/bridges/twoParentsWithTheSameMethodOneBridge.kt");
