@@ -41,6 +41,8 @@ interface ValueParameterDescriptor : VariableDescriptor, ParameterDescriptor {
 
     fun copy(newOwner: CallableDescriptor, newName: Name): ValueParameterDescriptor
 
+    fun replaceIndex(newIndex: Int): ValueParameterDescriptor
+
     /**
      * Parameter p1 overrides p2 iff
      * a) their respective owners (function declarations) f1 override f2
