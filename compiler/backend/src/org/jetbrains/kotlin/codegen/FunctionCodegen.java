@@ -63,10 +63,7 @@ import org.jetbrains.kotlin.resolve.jvm.jvmSignature.JvmMethodParameterSignature
 import org.jetbrains.kotlin.resolve.jvm.jvmSignature.JvmMethodSignature;
 import org.jetbrains.kotlin.types.KotlinType;
 import org.jetbrains.kotlin.types.TypeUtils;
-import org.jetbrains.org.objectweb.asm.AnnotationVisitor;
-import org.jetbrains.org.objectweb.asm.Label;
-import org.jetbrains.org.objectweb.asm.MethodVisitor;
-import org.jetbrains.org.objectweb.asm.Type;
+import org.jetbrains.org.objectweb.asm.*;
 import org.jetbrains.org.objectweb.asm.commons.InstructionAdapter;
 import org.jetbrains.org.objectweb.asm.commons.Method;
 import org.jetbrains.org.objectweb.asm.util.TraceMethodVisitor;
@@ -354,6 +351,15 @@ public class FunctionCodegen {
 
         if (context.getParentContext() instanceof MultifileClassFacadeContext) {
             generateFacadeDelegateMethodBody(mv, signature.getAsmMethod(), (MultifileClassFacadeContext) context.getParentContext());
+            methodEnd = new Label();
+        }
+        else if (OwnerKind.IMPLEMENTATION == context.getContextKind() &&
+                 JvmCodegenUtil.isJvmInterface(functionDescriptor.getContainingDeclaration())) {
+            int flags = AsmUtil.getMethodAsmFlags(functionDescriptor, OwnerKind.IMPLEMENTATION, context.getState());
+            assert (flags & Opcodes.ACC_ABSTRACT) == 0 : "Interface method with body should be non-abstract" + functionDescriptor;
+            Type type = typeMapper.mapDefaultImpls((ClassDescriptor) functionDescriptor.getContainingDeclaration());
+            Method asmMethod = typeMapper.mapAsmMethod(functionDescriptor, OwnerKind.DEFAULT_IMPLS);
+            generateDelegateToMethodBody(true, mv, asmMethod, type.getInternalName());
             methodEnd = new Label();
         }
         else {
