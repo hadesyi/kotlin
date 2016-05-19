@@ -21,6 +21,7 @@ import com.intellij.psi.PsiElement
 import org.jetbrains.kotlin.builtins.KotlinBuiltIns
 import org.jetbrains.kotlin.builtins.getReturnTypeFromFunctionType
 import org.jetbrains.kotlin.builtins.isFunctionType
+import org.jetbrains.kotlin.coroutines.CoroutineFunctionTypeTagTypeCapability
 import org.jetbrains.kotlin.descriptors.CallableMemberDescriptor
 import org.jetbrains.kotlin.descriptors.SimpleFunctionDescriptor
 import org.jetbrains.kotlin.descriptors.annotations.Annotations
@@ -43,6 +44,7 @@ import org.jetbrains.kotlin.types.TypeUtils
 import org.jetbrains.kotlin.types.TypeUtils.*
 import org.jetbrains.kotlin.types.expressions.CoercionStrategy.COERCION_TO_UNIT
 import org.jetbrains.kotlin.types.expressions.typeInfoFactory.createTypeInfo
+import org.jetbrains.kotlin.types.getCapability
 import org.jetbrains.kotlin.utils.addIfNotNull
 
 internal class FunctionsTypingVisitor(facade: ExpressionTypingInternals) : ExpressionTypingVisitor(facade) {
@@ -170,7 +172,8 @@ internal class FunctionsTypingVisitor(facade: ExpressionTypingInternals) : Expre
         val functionDescriptor = AnonymousFunctionDescriptor(
             context.scope.ownerDescriptor,
             components.annotationResolver.resolveAnnotationsWithArguments(context.scope, expression.getAnnotationEntries(), context.trace),
-            CallableMemberDescriptor.Kind.DECLARATION, functionLiteral.toSourceElement()
+            CallableMemberDescriptor.Kind.DECLARATION, functionLiteral.toSourceElement(),
+            context.expectedType.getCapability<CoroutineFunctionTypeTagTypeCapability>() != null
         )
         components.functionDescriptorResolver.
                 initializeFunctionDescriptorAndExplicitReturnType(context.scope.ownerDescriptor, context.scope, functionLiteral,
