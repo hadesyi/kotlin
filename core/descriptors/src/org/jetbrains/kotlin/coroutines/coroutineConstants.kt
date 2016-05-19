@@ -13,21 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.jetbrains.kotlin.coroutines
 
-import org.jetbrains.kotlin.descriptors.SimpleFunctionDescriptor
-import org.jetbrains.kotlin.types.KotlinType
-import org.jetbrains.kotlin.types.TypeCapability
-import org.jetbrains.kotlin.util.OperatorNameConventions
+import org.jetbrains.kotlin.name.FqName
 
-/**
- * @returns type of first value parameter if function is 'operator handleResult' in coroutines controller
- */
-fun SimpleFunctionDescriptor.getExpectedTypeForCoroutineControllerHandleResult(): KotlinType? {
-    if (!isOperator || name != OperatorNameConventions.COROUTINE_HANDLE_RESULT) return null
-
-    return valueParameters.getOrNull(0)?.type
-}
-
-object CoroutineFunctionTypeTagTypeCapability : TypeCapability
+@JvmField
+val CONTINUATION_INTERFACE_FQ_NAME = FqName("kotlin.coroutines.Continuation")

@@ -20,7 +20,6 @@ import com.google.common.collect.Lists
 import com.intellij.util.containers.ContainerUtil
 import org.jetbrains.kotlin.builtins.ReflectionTypes
 import org.jetbrains.kotlin.coroutines.CoroutineFunctionTypeTagTypeCapability
-import org.jetbrains.kotlin.coroutines.HANDLE_RESULT_NAME
 import org.jetbrains.kotlin.coroutines.getExpectedTypeForCoroutineControllerHandleResult
 import org.jetbrains.kotlin.descriptors.*
 import org.jetbrains.kotlin.incremental.KotlinLookupLocation
@@ -176,7 +175,9 @@ fun getEffectiveExpectedType(parameterDescriptor: ValueParameterDescriptor, argu
 
         val newExpectedLambdaReturnType =
                 receiverType.memberScope
-                        .getContributedFunctions(HANDLE_RESULT_NAME, KotlinLookupLocation(argument.asElement())).mapNotNull {
+                        .getContributedFunctions(
+                                OperatorNameConventions.COROUTINE_HANDLE_RESULT, KotlinLookupLocation(argument.asElement())
+                        ).mapNotNull {
                                 it.getExpectedTypeForCoroutineControllerHandleResult()
                         }.singleOrNull()
                 // If no handleResult function found, then expected return type for lambda is Unit
