@@ -488,7 +488,7 @@ public class InlineCodegen extends CallGenerator {
                         CallUtilKt.getResolvedCallWithAssert(((KtCallableReferenceExpression) expression).getCallableReference(),
                                                              codegen.getBindingContext()
                         )) :
-                new FunctionGenerationStrategy.FunctionDefault(state, descriptor, (KtDeclarationWithBody) expression);
+                new FunctionGenerationStrategy.FunctionDefault(state, (KtDeclarationWithBody) expression);
 
         FunctionCodegen.generateMethodBody(
                 adapter, descriptor, context, jvmMethodSignature,

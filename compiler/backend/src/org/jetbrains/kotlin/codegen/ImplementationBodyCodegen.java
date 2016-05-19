@@ -924,7 +924,7 @@ public class ImplementationBodyCodegen extends ClassBodyCodegen {
     private void generatePrimaryConstructor(final DelegationFieldsInfo delegationFieldsInfo) {
         if (isInterface(descriptor) || isAnnotationClass(descriptor)) return;
 
-        ConstructorDescriptor constructorDescriptor = descriptor.getUnsubstitutedPrimaryConstructor();
+        final ConstructorDescriptor constructorDescriptor = descriptor.getUnsubstitutedPrimaryConstructor();
         if (constructorDescriptor == null) return;
 
         ConstructorContext constructorContext = context.intoConstructor(constructorDescriptor);
@@ -933,10 +933,10 @@ public class ImplementationBodyCodegen extends ClassBodyCodegen {
         JvmDeclarationOrigin origin = JvmDeclarationOriginKt
                 .OtherOrigin(primaryConstructor != null ? primaryConstructor : myClass, constructorDescriptor);
         functionCodegen.generateMethod(origin, constructorDescriptor, constructorContext,
-                   new FunctionGenerationStrategy.CodegenBased<ConstructorDescriptor>(state, constructorDescriptor) {
+                   new FunctionGenerationStrategy.CodegenBased(state) {
                        @Override
                        public void doGenerateBody(@NotNull ExpressionCodegen codegen, @NotNull JvmMethodSignature signature) {
-                           generatePrimaryConstructorImpl(callableDescriptor, codegen, delegationFieldsInfo, primaryConstructor);
+                           generatePrimaryConstructorImpl(constructorDescriptor, codegen, delegationFieldsInfo, primaryConstructor);
                        }
                    }
         );
@@ -947,7 +947,7 @@ public class ImplementationBodyCodegen extends ClassBodyCodegen {
         new DefaultParameterValueSubstitutor(state).generatePrimaryConstructorOverloadsIfNeeded(constructorDescriptor, v, kind, myClass);
     }
 
-    private void generateSecondaryConstructor(@NotNull ConstructorDescriptor constructorDescriptor) {
+    private void generateSecondaryConstructor(@NotNull final ConstructorDescriptor constructorDescriptor) {
         if (!canHaveDeclaredConstructors(descriptor)) return;
 
         ConstructorContext constructorContext = context.intoConstructor(constructorDescriptor);
@@ -957,10 +957,10 @@ public class ImplementationBodyCodegen extends ClassBodyCodegen {
         functionCodegen.generateMethod(
                 JvmDeclarationOriginKt.OtherOrigin(constructor, constructorDescriptor),
                 constructorDescriptor, constructorContext,
-                new FunctionGenerationStrategy.CodegenBased<ConstructorDescriptor>(state, constructorDescriptor) {
+                new FunctionGenerationStrategy.CodegenBased(state) {
                                            @Override
                                            public void doGenerateBody(@NotNull ExpressionCodegen codegen, @NotNull JvmMethodSignature signature) {
-                                               generateSecondaryConstructorImpl(callableDescriptor, codegen);
+                                               generateSecondaryConstructorImpl(constructorDescriptor, codegen);
                                            }
                                        }
         );
@@ -1328,7 +1328,7 @@ public class ImplementationBodyCodegen extends ClassBodyCodegen {
         functionCodegen.generateMethod(
                 JvmDeclarationOriginKt.DelegationToTraitImpl(descriptorToDeclaration(traitFun), traitFun),
                 inheritedFun,
-                new FunctionGenerationStrategy.CodegenBased<FunctionDescriptor>(state, inheritedFun) {
+                new FunctionGenerationStrategy.CodegenBased(state) {
                     @Override
                     public void doGenerateBody(@NotNull ExpressionCodegen codegen, @NotNull JvmMethodSignature signature) {
                         DeclarationDescriptor containingDeclaration = traitFun.getContainingDeclaration();

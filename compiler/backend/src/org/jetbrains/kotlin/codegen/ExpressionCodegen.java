@@ -1402,7 +1402,7 @@ public class ExpressionCodegen extends KtVisitor<StackValue, StackValue> impleme
         assert descriptor != null : "Function is not resolved to descriptor: " + declaration.getText();
 
         return genClosure(
-                declaration, descriptor, new FunctionGenerationStrategy.FunctionDefault(state, descriptor, declaration), samType, null
+                declaration, descriptor, new FunctionGenerationStrategy.FunctionDefault(state, declaration), samType, null
         );
     }
 
