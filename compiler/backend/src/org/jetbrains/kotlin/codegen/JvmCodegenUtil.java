@@ -32,6 +32,7 @@ import org.jetbrains.kotlin.codegen.state.GenerationState;
 import org.jetbrains.kotlin.codegen.state.KotlinTypeMapper;
 import org.jetbrains.kotlin.descriptors.*;
 import org.jetbrains.kotlin.load.java.descriptors.JavaPropertyDescriptor;
+import org.jetbrains.kotlin.load.kotlin.KotlinJvmBinarySourceElement;
 import org.jetbrains.kotlin.load.kotlin.ModuleMapping;
 import org.jetbrains.kotlin.load.kotlin.ModuleVisibilityUtilsKt;
 import org.jetbrains.kotlin.psi.Call;
@@ -44,7 +45,9 @@ import org.jetbrains.kotlin.resolve.DescriptorUtils;
 import org.jetbrains.kotlin.resolve.inline.InlineUtil;
 import org.jetbrains.kotlin.resolve.scopes.receivers.ReceiverValue;
 import org.jetbrains.kotlin.serialization.deserialization.descriptors.DeserializedCallableMemberDescriptor;
+import org.jetbrains.kotlin.serialization.deserialization.descriptors.DeserializedClassDescriptor;
 import org.jetbrains.kotlin.types.KotlinType;
+import org.jetbrains.org.objectweb.asm.Opcodes;
 
 import java.io.File;
 
@@ -60,7 +63,26 @@ public class JvmCodegenUtil {
     }
 
     public static boolean isJvm6Interface(@NotNull DeclarationDescriptor descriptor, @NotNull GenerationState state) {
-        return DescriptorUtils.isInterface(descriptor) && !state.isJvm8();
+        if (!DescriptorUtils.isInterface(descriptor)) {
+            return false;
+        }
+
+        if (descriptor instanceof DeserializedClassDescriptor) {
+            SourceElement source = ((DeserializedClassDescriptor) descriptor).getSource();
+            if (source instanceof KotlinJvmBinarySourceElement) {
+                return ((KotlinJvmBinarySourceElement) source).getBinaryClass().getClassVersion() == Opcodes.V1_6;
+            }
+        }
+        return !state.isJvm8();
+    }
+
+    public static boolean isJvm8Interface(@NotNull DeclarationDescriptor descriptor, @NotNull GenerationState state) {
+        return DescriptorUtils.isInterface(descriptor) && !isJvm6Interface(descriptor, state);
+    }
+
+    public static boolean isJvm8InterfaceMember(@NotNull CallableMemberDescriptor descriptor, @NotNull GenerationState state) {
+        DeclarationDescriptor declaration = descriptor.getContainingDeclaration();
+        return DescriptorUtils.isInterface(declaration) && !isJvm6Interface(declaration, state);
     }
 
     public static boolean isJvmInterface(DeclarationDescriptor descriptor) {
