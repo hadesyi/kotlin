@@ -74,51 +74,45 @@ object KotlinToJVMBytecodeCompiler {
     private fun writeOutput(
             configuration: CompilerConfiguration,
             outputFiles: OutputFileCollection,
-            outputDir: File?,
-            jarPath: File?,
-            jarRuntime: Boolean,
-            mainClass: FqName?) {
+            mainClass: FqName?
+    ) {
+        val jarPath = configuration.get(JVMConfigurationKeys.OUTPUT_JAR)
         if (jarPath != null) {
-            CompileEnvironmentUtil.writeToJar(jarPath, jarRuntime, mainClass, outputFiles)
+            val includeRuntime = configuration.get(JVMConfigurationKeys.INCLUDE_RUNTIME, false)
+            CompileEnvironmentUtil.writeToJar(jarPath, includeRuntime, mainClass, outputFiles)
+            return
         }
-        else {
-            val messageCollector = configuration.get(CLIConfigurationKeys.MESSAGE_COLLECTOR_KEY, MessageCollector.NONE)
-            outputFiles.writeAll(outputDir ?: File("."), messageCollector)
-        }
+
+        val outputDir = configuration.get(JVMConfigurationKeys.OUTPUT_DIRECTORY) ?: File(".")
+        val messageCollector = configuration.get(CLIConfigurationKeys.MESSAGE_COLLECTOR_KEY, MessageCollector.NONE)
+        outputFiles.writeAll(outputDir, messageCollector)
     }
 
-    private fun createOutputFilesFlushingCallbackIfPossible(
-            configuration: CompilerConfiguration,
-            outputDir: File?,
-            jarPath: File?
-    ): GenerationStateEventCallback {
-        if (jarPath != null) return GenerationStateEventCallback.DO_NOTHING
-
+    private fun createOutputFilesFlushingCallbackIfPossible(configuration: CompilerConfiguration): GenerationStateEventCallback {
+        if (configuration.get(JVMConfigurationKeys.OUTPUT_DIRECTORY) == null) {
+            return GenerationStateEventCallback.DO_NOTHING
+        }
         return GenerationStateEventCallback { state ->
             val currentOutput = SimpleOutputFileCollection(state.factory.currentOutput)
-            writeOutput(configuration, currentOutput, outputDir, jarPath = null, jarRuntime = false, mainClass = null)
+            writeOutput(configuration, currentOutput, mainClass = null)
             state.factory.releaseGeneratedOutput()
         }
     }
 
-    fun compileModules(
-            environment: KotlinCoreEnvironment,
-            configuration: CompilerConfiguration,
-            chunk: List<Module>,
-            directory: File,
-            jarPath: File?,
-            friendPaths: List<String>,
-            jarRuntime: Boolean): Boolean {
+    fun compileModules(environment: KotlinCoreEnvironment, directory: File): Boolean {
         val outputFiles = hashMapOf<Module, ClassFileFactory>()
 
         ProgressIndicatorAndCompilationCanceledStatus.checkCanceled()
 
         val moduleVisibilityManager = ModuleVisibilityManager.SERVICE.getInstance(environment.project)
 
+        val projectConfiguration = environment.configuration
+        val chunk = projectConfiguration.get(JVMConfigurationKeys.MODULES) ?: error("No modules specified")
         for (module in chunk) {
             moduleVisibilityManager.addModule(module)
         }
 
+        val friendPaths = environment.configuration.get(JVMConfigurationKeys.FRIEND_PATHS).orEmpty()
         for (path in friendPaths) {
             moduleVisibilityManager.addFriendPath(path)
         }
@@ -131,27 +125,31 @@ object KotlinToJVMBytecodeCompiler {
 
         result.throwIfError()
 
-        val generationStates = ArrayList<GenerationState>()
+        val moduleConfigurations = ArrayList<CompilerConfiguration>(chunk.size)
+        val generationStates = ArrayList<GenerationState>(chunk.size)
 
         for (module in chunk) {
             ProgressIndicatorAndCompilationCanceledStatus.checkCanceled()
             val ktFiles = CompileEnvironmentUtil.getKtFiles(
-                    environment.project, getAbsolutePaths(directory, module), configuration) { s -> throw IllegalStateException("Should have been checked before: " + s) }
+                    environment.project, getAbsolutePaths(directory, module), projectConfiguration
+            ) { path -> throw IllegalStateException("Should have been checked before: $path") }
             if (!checkKotlinPackageUsage(environment, ktFiles)) return false
 
-            val onIndependentPartCompilationEnd =
-                    createOutputFilesFlushingCallbackIfPossible(configuration, File(module.getOutputDirectory()), jarPath)
+            val moduleConfiguration = projectConfiguration.copy().apply {
+                put(JVMConfigurationKeys.OUTPUT_DIRECTORY, File(module.getOutputDirectory()))
+            }
 
-            val generationState = generate(environment, result, ktFiles, module, onIndependentPartCompilationEnd)
+            val generationState = generate(environment, moduleConfiguration, result, ktFiles, module)
 
             outputFiles.put(module, generationState.factory)
+            moduleConfigurations.add(moduleConfiguration)
             generationStates.add(generationState)
         }
 
         try {
-            for (module in chunk) {
+            for ((module, configuration) in chunk.zip(moduleConfigurations)) {
                 ProgressIndicatorAndCompilationCanceledStatus.checkCanceled()
-                writeOutput(configuration, outputFiles[module]!!, File(module.getOutputDirectory()), jarPath, jarRuntime, null)
+                writeOutput(configuration, outputFiles[module]!!, null)
             }
             return true
         }
@@ -162,12 +160,7 @@ object KotlinToJVMBytecodeCompiler {
         }
     }
 
-    fun createCompilerConfiguration(
-            base: CompilerConfiguration,
-            chunk: List<Module>,
-            directory: File): CompilerConfiguration {
-        val configuration = base.copy()
-
+    fun configureSourceRoots(configuration: CompilerConfiguration, chunk: List<Module>, directory: File) {
         for (module in chunk) {
             configuration.addKotlinSourceRoots(getAbsolutePaths(directory, module))
         }
@@ -185,8 +178,6 @@ object KotlinToJVMBytecodeCompiler {
         }
 
         configuration.addAll(JVMConfigurationKeys.MODULES, chunk)
-
-        return configuration
     }
 
     private fun findMainClass(generationState: GenerationState, files: List<KtFile>): FqName? {
@@ -201,28 +192,22 @@ object KotlinToJVMBytecodeCompiler {
                 .singleOrNull { it != null }
     }
 
-    fun compileBunchOfSources(
-            environment: KotlinCoreEnvironment,
-            jar: File?,
-            outputDir: File?,
-            friendPaths: List<String>,
-            includeRuntime: Boolean): Boolean {
-
+    fun compileBunchOfSources(environment: KotlinCoreEnvironment): Boolean {
         val moduleVisibilityManager = ModuleVisibilityManager.SERVICE.getInstance(environment.project)
 
+        val friendPaths = environment.configuration.get(JVMConfigurationKeys.FRIEND_PATHS).orEmpty()
         for (path in friendPaths) {
             moduleVisibilityManager.addFriendPath(path)
         }
 
         if (!checkKotlinPackageUsage(environment, environment.getSourceFiles())) return false
 
-        val onIndependentPartCompilationEnd = createOutputFilesFlushingCallbackIfPossible(environment.configuration, outputDir, jar)
-        val generationState = analyzeAndGenerate(environment, onIndependentPartCompilationEnd) ?: return false
+        val generationState = analyzeAndGenerate(environment) ?: return false
 
         val mainClass = findMainClass(generationState, environment.getSourceFiles())
 
         try {
-            writeOutput(environment.configuration, generationState.factory, outputDir, jar, includeRuntime, mainClass)
+            writeOutput(environment.configuration, generationState.factory, mainClass)
             return true
         }
         finally {
@@ -230,12 +215,8 @@ object KotlinToJVMBytecodeCompiler {
         }
     }
 
-    fun compileAndExecuteScript(
-            configuration: CompilerConfiguration,
-            paths: KotlinPaths,
-            environment: KotlinCoreEnvironment,
-            scriptArgs: List<String>): ExitCode {
-        val scriptClass = compileScript(configuration, paths, environment) ?: return ExitCode.COMPILATION_ERROR
+    fun compileAndExecuteScript(environment: KotlinCoreEnvironment, paths: KotlinPaths, scriptArgs: List<String>): ExitCode {
+        val scriptClass = compileScript(environment, paths) ?: return ExitCode.COMPILATION_ERROR
         val scriptConstructor = getScriptConstructor(scriptClass)
 
         try {
@@ -275,40 +256,30 @@ object KotlinToJVMBytecodeCompiler {
     private fun getScriptConstructor(scriptClass: Class<*>): Constructor<*> =
             scriptClass.getConstructor(Array<String>::class.java)
 
-    fun compileScript(
-            configuration: CompilerConfiguration,
-            paths: KotlinPaths,
-            environment: KotlinCoreEnvironment): Class<*>? {
-        val state = analyzeAndGenerate(environment, GenerationStateEventCallback.DO_NOTHING) ?: return null
+    fun compileScript(environment: KotlinCoreEnvironment, paths: KotlinPaths): Class<*>? {
+        val state = analyzeAndGenerate(environment) ?: return null
 
-        val classLoader: GeneratedClassLoader
         try {
             val classPaths = arrayListOf(paths.runtimePath.toURI().toURL())
-            configuration.jvmClasspathRoots.mapTo(classPaths) { it.toURI().toURL() }
-            classLoader = GeneratedClassLoader(state.factory, URLClassLoader(classPaths.toTypedArray(), null))
+            environment.configuration.jvmClasspathRoots.mapTo(classPaths) { it.toURI().toURL() }
+            val classLoader = GeneratedClassLoader(state.factory, URLClassLoader(classPaths.toTypedArray(), null))
 
-            val script = environment.getSourceFiles()[0].script
-            assert(script != null) { "Script must be parsed" }
-            val nameForScript = script!!.fqName
-            return classLoader.loadClass(nameForScript.asString())
+            val script = environment.getSourceFiles()[0].script ?: error("Script must be parsed")
+            return classLoader.loadClass(script.fqName.asString())
         }
         catch (e: Exception) {
             throw RuntimeException("Failed to evaluate script: " + e, e)
         }
-
     }
 
-    fun analyzeAndGenerate(
-            environment: KotlinCoreEnvironment,
-            onIndependentPartCompilationEnd: GenerationStateEventCallback
-    ): GenerationState? {
+    fun analyzeAndGenerate(environment: KotlinCoreEnvironment): GenerationState? {
         val result = analyze(environment, null) ?: return null
 
         if (!result.shouldGenerateCode) return null
 
         result.throwIfError()
 
-        return generate(environment, result, environment.getSourceFiles(), null, onIndependentPartCompilationEnd)
+        return generate(environment, environment.configuration, result, environment.getSourceFiles(), null)
     }
 
     private fun analyze(environment: KotlinCoreEnvironment, targetDescription: String?): AnalysisResult? {
@@ -362,10 +333,10 @@ object KotlinToJVMBytecodeCompiler {
 
     private fun generate(
             environment: KotlinCoreEnvironment,
+            configuration: CompilerConfiguration,
             result: AnalysisResult,
             sourceFiles: List<KtFile>,
-            module: Module?,
-            onIndependentPartCompilationEnd: GenerationStateEventCallback
+            module: Module?
     ): GenerationState {
         val generationState = GenerationState(
                 environment.project,
@@ -373,12 +344,12 @@ object KotlinToJVMBytecodeCompiler {
                 result.moduleDescriptor,
                 result.bindingContext,
                 sourceFiles,
-                environment.configuration,
+                configuration,
                 GenerationState.GenerateClassFilter.GENERATE_ALL,
                 module?.let(::TargetId),
                 module?.let { it.getModuleName() },
                 module?.let { File(it.getOutputDirectory()) },
-                onIndependentPartCompilationEnd
+                createOutputFilesFlushingCallbackIfPossible(configuration)
         )
         ProgressIndicatorAndCompilationCanceledStatus.checkCanceled()
 
@@ -414,7 +385,7 @@ object KotlinToJVMBytecodeCompiler {
     }
 
     private fun checkKotlinPackageUsage(environment: KotlinCoreEnvironment, files: Collection<KtFile>): Boolean {
-        if (environment.configuration.get(CLIConfigurationKeys.ALLOW_KOTLIN_PACKAGE) == true) {
+        if (environment.configuration.get(CLIConfigurationKeys.ALLOW_KOTLIN_PACKAGE, false)) {
             return true
         }
         val messageCollector = environment.configuration.get(CLIConfigurationKeys.MESSAGE_COLLECTOR_KEY, MessageCollector.NONE)
