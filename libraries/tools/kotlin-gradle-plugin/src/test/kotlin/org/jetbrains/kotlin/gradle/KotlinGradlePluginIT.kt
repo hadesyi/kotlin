@@ -56,11 +56,12 @@ class KotlinGradleIT: BaseGradleIT() {
         val project = Project("kotlinProject", GRADLE_VERSION)
         val VARIANT_CONSTANT = "ForTest"
         val userVariantArg = "-Duser.variant=$VARIANT_CONSTANT"
+        val forceFinalizeArg = "-P${CleanUpBuildListener.FORCE_FINALIZE_PROPERTY}=true"
         val MEMORY_MAX_GROWTH_LIMIT_KB = 500
         val BUILD_COUNT = 15
 
         fun exitTestDaemon() {
-            project.build(userVariantArg, "exit", options = BaseGradleIT.BuildOptions(withDaemon = true)) {
+            project.build(userVariantArg, forceFinalizeArg, "exit", options = BaseGradleIT.BuildOptions(withDaemon = true)) {
                 assertFailed()
                 assertContains("The daemon has exited normally or was terminated in response to a user interrupt.")
             }
@@ -69,7 +70,7 @@ class KotlinGradleIT: BaseGradleIT() {
         fun buildAndGetMemoryAfterBuild(): Int {
             var reportedMemory: Int? = null
 
-            project.build(userVariantArg, "clean", "build", options = BaseGradleIT.BuildOptions(withDaemon = true)) {
+            project.build(userVariantArg, forceFinalizeArg, "clean", "build", options = BaseGradleIT.BuildOptions(withDaemon = true)) {
                 assertSuccessful()
                 val matches = "\\[PERF\\] Used memory after build: (\\d+) kb \\(difference since build start: ([+-]?\\d+) kb\\)".toRegex().find(output)
                 assert(matches != null && matches.groups.size == 3) { "Used memory after build is not reported by plugin" }
@@ -93,7 +94,7 @@ class KotlinGradleIT: BaseGradleIT() {
                     "Maximum used memory over series of builds growth $maxGrowth (from $establishedMaximum to $totalMaximum) kb > $MEMORY_MAX_GROWTH_LIMIT_KB kb")
 
             // testing that nothing remains locked by daemon, see KT-9440
-            project.build(userVariantArg, "clean", options = BaseGradleIT.BuildOptions(withDaemon = true)) {
+            project.build(userVariantArg, forceFinalizeArg, "clean", options = BaseGradleIT.BuildOptions(withDaemon = true)) {
                 assertSuccessful()
             }
         }

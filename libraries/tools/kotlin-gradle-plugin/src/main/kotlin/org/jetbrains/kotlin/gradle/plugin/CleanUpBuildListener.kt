@@ -35,12 +35,16 @@ private fun comparableVersionStr(version: String) =
 
 class CleanUpBuildListener(pluginClassLoader: ClassLoader, private val project: Project) : BuildAdapter() {
     companion object {
+        const val FORCE_FINALIZE_PROPERTY = "kotlin.gradle.test.forceFinalize"
+
         const val FORCE_SYSTEM_GC_MESSAGE = "Forcing System.gc()"
+        const val FORCE_SYSTEM_GC_FINALIZE_MESSAGE = "Forcing System.gc() -> finalization -> gc()"
     }
 
     private val log = Logging.getLogger(this.javaClass)
     private val cleanup = CompilerServicesCleanup(pluginClassLoader)
     private var startMemory: Long? = null
+    private val runGcWithFinalizers = project.hasProperty(FORCE_FINALIZE_PROPERTY) // (project.properties[FORCE_GC_FINALIZE_PROPERTY] as String?)?.toBoolean() ?: false
 
     // There is function with the same name in BuildAdapter,
     // but it is called before any plugin can attach build listener
@@ -83,11 +87,15 @@ class CleanUpBuildListener(pluginClassLoader: ClassLoader, private val project: 
     private fun getUsedMemoryKb(): Long? {
         if (!log.isDebugEnabled) return null
 
-        log.lifecycle(FORCE_SYSTEM_GC_MESSAGE)
-        System.gc()
-        System.runFinalization()
-        System.gc()
         val rt = Runtime.getRuntime()
+        if (runGcWithFinalizers) {
+            log.lifecycle(FORCE_SYSTEM_GC_FINALIZE_MESSAGE)
+            rt.gc()
+            rt.runFinalization()
+        } else {
+            log.lifecycle(FORCE_SYSTEM_GC_MESSAGE)
+        }
+        rt.gc()
         return (rt.totalMemory() - rt.freeMemory()) / 1024
     }
 }
