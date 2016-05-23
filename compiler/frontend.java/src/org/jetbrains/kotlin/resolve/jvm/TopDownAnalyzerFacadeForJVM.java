@@ -138,12 +138,16 @@ public enum TopDownAnalyzerFacadeForJVM {
     }
 
     @NotNull
-    public static MutableModuleContext createContextWithSealedModule(@NotNull Project project, @NotNull String moduleName) {
+    public static MutableModuleContext createContextWithSealedModule(
+            @NotNull Project project, @NotNull CompilerConfiguration configuration
+    ) {
+        String moduleName = configuration.get(JVMConfigurationKeys.MODULE_NAME);
+        assert moduleName != null : "Module should have a name";
+
         ProjectContext projectContext = ContextKt.ProjectContext(project);
         JvmBuiltIns builtIns = new JvmBuiltIns(projectContext.getStorageManager());
         MutableModuleContext context = ContextKt.ContextForNewModule(
-                projectContext, Name.special("<" + moduleName + ">"), JvmPlatform.INSTANCE,
-                builtIns
+                projectContext, Name.special("<" + moduleName + ">"), JvmPlatform.INSTANCE, builtIns
         );
         builtIns.setOwnerModuleDescriptor(context.getModule());
         context.setDependencies(context.getModule(), context.getBuiltIns().getBuiltInsModule());

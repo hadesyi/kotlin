@@ -30,7 +30,6 @@ import org.jetbrains.kotlin.cli.jvm.compiler.CliLightClassGenerationSupport
 import org.jetbrains.kotlin.cli.jvm.compiler.EnvironmentConfigFiles
 import org.jetbrains.kotlin.cli.jvm.compiler.JvmPackagePartProvider
 import org.jetbrains.kotlin.cli.jvm.compiler.KotlinCoreEnvironment
-import org.jetbrains.kotlin.cli.jvm.config.getModuleName
 import org.jetbrains.kotlin.cli.jvm.config.jvmClasspathRoots
 import org.jetbrains.kotlin.cli.jvm.repl.di.ReplLastLineScopeProvider
 import org.jetbrains.kotlin.cli.jvm.repl.di.createContainerForReplWithJava
@@ -98,7 +97,7 @@ class ReplInterpreter(
 
         this.psiFileFactory = PsiFileFactory.getInstance(project) as PsiFileFactoryImpl
         this.trace = CliLightClassGenerationSupport.NoScopeRecordCliBindingTrace()
-        val moduleContext = TopDownAnalyzerFacadeForJVM.createContextWithSealedModule(project, environment.getModuleName())
+        val moduleContext = TopDownAnalyzerFacadeForJVM.createContextWithSealedModule(project, configuration)
         this.module = moduleContext.module
 
         scriptDeclarationFactory = ScriptMutableDeclarationProviderFactory()
