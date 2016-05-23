@@ -33,11 +33,11 @@ interface B {
 
     <!DECLARATION_CANT_BE_INLINED!>inline fun wrong1()<!> {}
 
-    <!DECLARATION_CANT_BE_INLINED!>inline open fun wrong2()<!> {}
+    <!DECLARATION_CANT_BE_INLINED!>inline <!REDUNDANT_MODIFIER_CONTAINING_DECLARATION!>open<!> fun wrong2()<!> {}
 
-    <!DECLARATION_CANT_BE_INLINED!>inline open public fun wrong3()<!> {}
+    <!DECLARATION_CANT_BE_INLINED!>inline <!REDUNDANT_MODIFIER_CONTAINING_DECLARATION!>open<!> public fun wrong3()<!> {}
 
-    <!DECLARATION_CANT_BE_INLINED!>inline open fun wrong4()<!> {}
+    <!DECLARATION_CANT_BE_INLINED!>inline <!REDUNDANT_MODIFIER_CONTAINING_DECLARATION!>open<!> fun wrong4()<!> {}
 
     <!DECLARATION_CANT_BE_INLINED!>inline fun wrong5()<!>
 

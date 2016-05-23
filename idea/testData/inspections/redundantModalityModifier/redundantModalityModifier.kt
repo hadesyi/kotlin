@@ -29,13 +29,13 @@ interface Interface {
     abstract fun foo()
     // Redundant
     private final fun bar() {}
-    // Redundant
+    // Compiler warning (open in interface)
     open val gav: Int
         get() = 42
 }
 // Derived interface
 interface Derived : Interface {
-    // Redundant
+    // Compiler warning (open in interface)
     override open fun foo() {}
     // Redundant
     final class Nested

@@ -334,6 +334,9 @@ object KeywordCompletion {
                     val deprecatedParents = ModifierCheckerCore.deprecatedParentTargetMap[keywordTokenType]
                     if (deprecatedParents != null && parentTarget in deprecatedParents) return false
 
+                    val redundantParents = ModifierCheckerCore.deprecatedParentTargetMap[keywordTokenType]
+                    if (redundantParents != null && parentTarget in redundantParents) return false
+
                     return true
                 }
             }

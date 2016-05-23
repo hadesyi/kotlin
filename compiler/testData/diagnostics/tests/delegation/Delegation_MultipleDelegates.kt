@@ -1,10 +1,10 @@
 // !DIAGNOSTICS: -CONFLICTING_JVM_DECLARATIONS
 interface One {
-  public open fun foo() : Int
+  public <!REDUNDANT_MODIFIER_CONTAINING_DECLARATION!>open<!> fun foo() : Int
   private fun boo() = 10
 }
 interface Two {
-  public open fun foo() : Int
+  public <!REDUNDANT_MODIFIER_CONTAINING_DECLARATION!>open<!> fun foo() : Int
 }
 
 interface OneImpl : One {

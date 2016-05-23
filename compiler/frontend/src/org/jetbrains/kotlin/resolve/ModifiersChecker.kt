@@ -112,6 +112,10 @@ object ModifierCheckerCore {
 
     val deprecatedParentTargetMap = mapOf<KtModifierKeywordToken, Set<KotlinTarget>>()
 
+    val redundantParentTargetMap = mapOf<KtModifierKeywordToken, Set<KotlinTarget>>(
+            OPEN_KEYWORD      to EnumSet.of(INTERFACE)
+    )
+
     // First modifier in pair should be also first in declaration
     private val mutualCompatibility = buildCompatibilityMap()
 
@@ -251,6 +255,11 @@ object ModifierCheckerCore {
         val deprecatedParents = deprecatedParentTargetMap[modifier]
         if (deprecatedParents != null && actualParents.any { it in deprecatedParents }) {
             trace.report(Errors.DEPRECATED_MODIFIER_CONTAINING_DECLARATION.on(node.psi, modifier, actualParents.firstOrNull()?.description ?: "this scope"))
+            return true
+        }
+        val redundantParents = redundantParentTargetMap[modifier]
+        if (redundantParents != null && actualParents.any { it in redundantParents }) {
+            trace.report(Errors.REDUNDANT_MODIFIER_CONTAINING_DECLARATION.on(node.psi, modifier, actualParents.firstOrNull()?.description ?: "this scope"))
             return true
         }
         val possibleParents = possibleParentTargetMap[modifier] ?: return true

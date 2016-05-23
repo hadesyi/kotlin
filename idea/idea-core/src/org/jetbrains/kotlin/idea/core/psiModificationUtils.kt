@@ -225,7 +225,7 @@ fun KtModifierListOwner.canBeProtected(): Boolean {
     }
 }
 
-fun KtDeclaration.implicitModality(): KtModifierKeywordToken {
+fun KtDeclaration.implicitModality(): KtModifierKeywordToken? {
     if (this is KtClassOrObject) {
         if (this is KtClass && this.isInterface()) return KtTokens.ABSTRACT_KEYWORD
         return KtTokens.FINAL_KEYWORD
@@ -244,7 +244,7 @@ fun KtDeclaration.implicitModality(): KtModifierKeywordToken {
             is KtFunction -> hasBody()
             else -> false
         }
-        return if (hasBody) KtTokens.OPEN_KEYWORD else KtTokens.ABSTRACT_KEYWORD
+        return if (hasBody) null else KtTokens.ABSTRACT_KEYWORD
     }
     return KtTokens.FINAL_KEYWORD
 }
