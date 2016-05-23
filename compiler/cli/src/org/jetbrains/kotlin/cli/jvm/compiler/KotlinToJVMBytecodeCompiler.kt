@@ -105,7 +105,7 @@ object KotlinToJVMBytecodeCompiler {
         val moduleVisibilityManager = ModuleVisibilityManager.SERVICE.getInstance(environment.project)
 
         val projectConfiguration = environment.configuration
-        val chunk = projectConfiguration.get(JVMConfigurationKeys.MODULES) ?: error("No modules specified")
+        val chunk = projectConfiguration.getNotNull(JVMConfigurationKeys.MODULES)
         for (module in chunk) {
             moduleVisibilityManager.addModule(module)
         }
@@ -281,7 +281,7 @@ object KotlinToJVMBytecodeCompiler {
     }
 
     private fun analyze(environment: KotlinCoreEnvironment, targetDescription: String?): AnalysisResult? {
-        val collector = environment.messageCollector()
+        val collector = environment.messageCollector
 
         val analysisStart = PerformanceCounter.currentTime()
         val analyzerWithCompilerReport = AnalyzerWithCompilerReport(collector)
@@ -363,11 +363,11 @@ object KotlinToJVMBytecodeCompiler {
                         generationState.collectedExtraJvmDiagnostics,
                         result.bindingContext.diagnostics
                 ),
-                environment.messageCollector()
+                environment.messageCollector
         )
 
         AnalyzerWithCompilerReport.reportBytecodeVersionErrors(
-                generationState.extraJvmDiagnosticsTrace.bindingContext, environment.messageCollector()
+                generationState.extraJvmDiagnosticsTrace.bindingContext, environment.messageCollector
         )
 
         ProgressIndicatorAndCompilationCanceledStatus.checkCanceled()
@@ -391,11 +391,8 @@ object KotlinToJVMBytecodeCompiler {
         return true
     }
 
-    fun KotlinCoreEnvironment.messageCollector(): MessageCollector {
-        val result = configuration.get(CLIConfigurationKeys.MESSAGE_COLLECTOR_KEY)
-        assert(result != null) { "Message collector not specified in compiler configuration" }
-        return result!!
-    }
+    private val KotlinCoreEnvironment.messageCollector: MessageCollector
+        get() = configuration.getNotNull(CLIConfigurationKeys.MESSAGE_COLLECTOR_KEY)
 
     private fun reportRuntimeConflicts(messageCollector: MessageCollector, jvmClasspathRoots: List<File>) {
         fun String.removeIdeaVersionSuffix(): String {
