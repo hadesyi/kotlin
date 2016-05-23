@@ -23,6 +23,7 @@ import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vfs.VfsUtilCore
 import org.jetbrains.kotlin.backend.common.output.*
 import org.jetbrains.kotlin.descriptors.ModuleDescriptor
+import org.jetbrains.kotlin.js.config.JSConfigurationKeys
 import org.jetbrains.kotlin.js.config.JsConfig
 import org.jetbrains.kotlin.js.sourceMap.JsSourceGenerationVisitor
 import org.jetbrains.kotlin.js.sourceMap.SourceMap3Builder
@@ -45,14 +46,12 @@ abstract class TranslationResult protected constructor(val diagnostics: Diagnost
             diagnostics: Diagnostics,
             private val moduleDescriptor: ModuleDescriptor
     ) : TranslationResult(diagnostics) {
-        fun getCode(): String = getCode(TextOutputImpl(), sourceMapBuilder = null)
-
         fun getOutputFiles(outputFile: File, outputPrefixFile: File?, outputPostfixFile: File?): OutputFileCollection {
             val output = TextOutputImpl()
-            val sourceMapBuilder = when {
-                config.isSourcemap -> SourceMap3Builder(outputFile, output, SourceMapBuilderConsumer())
-                else -> null
-            }
+            val sourceMapBuilder =
+                    if (config.configuration.get(JSConfigurationKeys.SOURCE_MAP, false))
+                        SourceMap3Builder(outputFile, output, SourceMapBuilderConsumer())
+                    else null
 
             val code = getCode(output, sourceMapBuilder)
             val prefix = outputPrefixFile?.readText() ?: ""
@@ -69,7 +68,7 @@ abstract class TranslationResult protected constructor(val diagnostics: Diagnost
             val jsFile = SimpleOutputFile(sourceFiles, outputFile.name, prefix + code + postfix)
             val outputFiles = arrayListOf<OutputFile>(jsFile)
 
-            if (config.isMetaInfo) {
+            if (config.configuration.get(JSConfigurationKeys.META_INFO, false)) {
                 val metaFileName = KotlinJavascriptMetadataUtils.replaceSuffix(outputFile.name)
                 val metaFileContent = KotlinJavascriptSerializationUtil.metadataAsString(config.moduleId, moduleDescriptor)
                 val sourceFilesForMetaFile = ArrayList(sourceFiles)
@@ -77,7 +76,7 @@ abstract class TranslationResult protected constructor(val diagnostics: Diagnost
                 outputFiles.add(jsMetaFile)
             }
 
-            if (config.isKjsm) {
+            if (config.configuration.get(JSConfigurationKeys.KJSM, false)) {
                 KotlinJavascriptSerializationUtil.toContentMap(moduleDescriptor).forEach {
                     // TODO Add correct source files
                     outputFiles.add(SimpleOutputBinaryFile(emptyList(), config.moduleId + VfsUtilCore.VFS_SEPARATOR_CHAR + it.key, it.value))
